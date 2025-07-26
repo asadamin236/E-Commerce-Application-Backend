@@ -1,5 +1,5 @@
 // controllers/recommendController.js
-const Product = require("../models/Product");
+const Product = require("../models/productModel");
 const { askGemini } = require("../services/geminiService");
 
 const recommendProducts = async (req, res) => {

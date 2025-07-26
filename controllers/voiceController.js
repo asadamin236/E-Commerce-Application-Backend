@@ -1,45 +1,24 @@
-const Product = require("../models/Product");
-const { askGemini } = require("../services/geminiService");
+const Product = require("../models/productModel");
 
 const handleVoiceToGemini = async (req, res) => {
   try {
     const { text } = req.body;
-    if (!text) {
+    if (!text)
       return res.status(400).json({ error: "No transcription text provided" });
-    }
 
-    // ✅ Improved Prompt
-    const prompt = `
-The user said: "${text}".
-Return only 3-5 short keywords or product categories — comma-separated. Example: phone, camera, android, under 1000
-Do not include full sentences.
-`;
-
-    const geminiResponse = await askGemini(prompt);
-
-    // ✅ Tag Extraction (safe)
-    let tags = [];
-    try {
-      tags = geminiResponse
-        .split(",")
-        .map((t) => t.trim().toLowerCase())
-        .filter((t) => t.length > 0);
-    } catch (err) {
-      console.error("Tag Parse Error:", err);
-      return res.status(400).json({ error: "Invalid Gemini response" });
-    }
-
-    // Product Search
+    // Directly use the text as a search query (like /search)
+    const regex = new RegExp(text, "i");
     const products = await Product.find({
       $or: [
-        { title: { $in: tags.map((t) => new RegExp(t, "i")) } },
-        { category: { $in: tags.map((t) => new RegExp(t, "i")) } },
+        { title: regex },
+        { category: regex },
+        { description: regex },
       ],
-    }).limit(10);
+    });
 
-    return res.json({ tags, recommended: products });
+    res.json({ products });
   } catch (error) {
-    console.error("Voice to Gemini Error:", error);
+    console.error("Voice search error:", error.message);
     res.status(500).json({ error: "Failed to process voice input" });
   }
 };

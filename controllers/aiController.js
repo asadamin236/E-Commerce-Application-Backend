@@ -1,41 +1,28 @@
 // controllers/aiController.js
+const Product = require("../models/productModel");
 
-const Product = require("../models/Product");
-const { askGemini } = require("../services/geminiService");
+const recommendProducts = async (req, res) => {
+  const { text } = req.body;
 
-// Handle product-specific AI Q&A (you can edit logic as needed)
-const handleAskProductAI = async (req, res) => {
+  if (!text || typeof text !== "string") {
+    return res.status(400).json({ error: "Invalid input" });
+  }
+
   try {
-    const { question, productId } = req.body;
+    const allProducts = await Product.find({});
 
-    if (!question || !productId) {
-      return res.status(400).json({ error: "Missing question or productId." });
-    }
+    // Simple match based on keyword in title or description
+    const recommended = allProducts.filter(
+      (product) =>
+        product.title.toLowerCase().includes(text.toLowerCase()) ||
+        product.description.toLowerCase().includes(text.toLowerCase())
+    );
 
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ error: "Product not found." });
-    }
-
-    const prompt = `
-You're an AI assistant helping users understand products.
-
-Question: "${question}"
-Product Details:
-Title: ${product.title}
-Category: ${product.category}
-Description: ${product.description}
-Price: ${product.price}
-
-Answer clearly and helpfully based on this product.
-`;
-
-    const aiAnswer = await askGemini(prompt);
-    res.json({ answer: aiAnswer });
-  } catch (err) {
-    console.error("AI Product Q&A Error:", err);
-    res.status(500).json({ error: "Failed to answer product question." });
+    res.json({ recommended });
+  } catch (error) {
+    console.error("AI Recommend Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
-module.exports = { handleAskProductAI };
+module.exports = { recommendProducts };

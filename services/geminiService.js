@@ -1,25 +1,16 @@
-// services/geminiService.js
 const axios = require("axios");
 
 const askGemini = async (prompt) => {
-  try {
-    const response = await axios.post(
-      `${process.env.GEMINI_API_URL}?key=${process.env.GEMINI_API_KEY}`,
-      {
-        contents: [{ parts: [{ text: prompt }] }],
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+  const url = `${process.env.GEMINI_API_URL}?key=${process.env.GEMINI_API_KEY}`;
 
-    return response.data.candidates[0].content.parts[0].text;
-  } catch (err) {
-    console.error("Gemini API Error:", err.message);
-    return "Something went wrong with Gemini AI.";
-  }
+  const payload = {
+    contents: [{ parts: [{ text: prompt }] }],
+  };
+
+  const response = await axios.post(url, payload);
+  const reply = response.data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  return reply;
 };
 
 module.exports = { askGemini };

@@ -75,8 +75,6 @@ mongoose
 
 // Start server
 >>>>>>> e3e5f0a823ee9b7714046671609ac4f50af66788
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+// For Vercel deployment, the entry point is now api/index.js
+// app.listen removed. Use api/index.js for serverless deployment.
 

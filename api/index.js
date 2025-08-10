@@ -15,7 +15,7 @@ const app = express();
 app.use(express.json()); // Parses incoming JSON
 app.use(
   cors({
-    origin: "https://e-commerce-application-jzff.vercel.app/", // frontend Vercel URL
+    origin: "https://e-commerce-application-iota-two.vercel.app", // frontend Vercel URL
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })

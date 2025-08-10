@@ -17,7 +17,7 @@ app.use(
   cors({
     origin: [
       "https://e-commerce-application-iota-two.vercel.app",
-      "http://localhost:5173"
+      "http://localhost:5173",
     ], // frontend Vercel URL and local dev
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
@@ -55,5 +55,11 @@ mongoose
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
+}
 // Export the Express app for Vercel
 module.exports = app;

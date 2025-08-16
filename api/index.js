@@ -20,7 +20,7 @@ app.use(
       "http://localhost:5173",
     ], // frontend Vercel URL and local dev
     methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
+    credentials: false,
   })
 );
 app.use(morgan("dev")); // Logs HTTP requests

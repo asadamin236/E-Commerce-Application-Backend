@@ -12,6 +12,9 @@ const extractSearchKeywords = (text) => {
 
 const handleVoiceToGemini = async (req, res) => {
   try {
+    console.log("Voice search endpoint hit");
+    console.log("Request body:", req.body);
+    
     const { text } = req.body;
     console.log("Voice search request received:", text);
     
@@ -22,34 +25,61 @@ const handleVoiceToGemini = async (req, res) => {
       });
     }
 
+    // Check if Product model is available
+    if (!Product) {
+      console.error("Product model is not available");
+      return res.status(500).json({
+        success: false,
+        error: "Database model not found",
+        message: "Product model is not available"
+      });
+    }
+
     // Extract keywords from voice input
     const keywords = extractSearchKeywords(text);
     console.log("Extracted keywords:", keywords);
 
     let products = [];
     
-    if (keywords.length > 0) {
-      // Create regex patterns for each keyword
-      const regexPatterns = keywords.map(keyword => new RegExp(keyword, "i"));
+    try {
+      if (keywords.length > 0) {
+        // Create regex patterns for each keyword
+        const regexPatterns = keywords.map(keyword => new RegExp(keyword, "i"));
+        
+        // Search for products matching any of the keywords
+        products = await Product.find({
+          $or: [
+            ...regexPatterns.map(regex => ({ title: regex })),
+            ...regexPatterns.map(regex => ({ category: regex })),
+            ...regexPatterns.map(regex => ({ description: regex })),
+          ],
+        }).limit(50); // Limit results to prevent overwhelming response
+      } else {
+        // Fallback: search with original text
+        const regex = new RegExp(text, "i");
+        products = await Product.find({
+          $or: [
+            { title: regex },
+            { category: regex },
+            { description: regex },
+          ],
+        }).limit(50);
+      }
+    } catch (dbError) {
+      console.error("Database query error:", dbError);
       
-      // Search for products matching any of the keywords
-      products = await Product.find({
-        $or: [
-          ...regexPatterns.map(regex => ({ title: regex })),
-          ...regexPatterns.map(regex => ({ category: regex })),
-          ...regexPatterns.map(regex => ({ description: regex })),
-        ],
-      }).limit(50); // Limit results to prevent overwhelming response
-    } else {
-      // Fallback: search with original text
-      const regex = new RegExp(text, "i");
-      products = await Product.find({
-        $or: [
-          { title: regex },
-          { category: regex },
-          { description: regex },
-        ],
-      }).limit(50);
+      // Return a fallback response instead of complete failure
+      return res.json({
+        success: true,
+        products: [],
+        searchQuery: text,
+        extractedKeywords: keywords,
+        totalResults: 0,
+        message: `Voice search processed for "${text}" but database is temporarily unavailable. Please try again later.`,
+        fallback: true,
+        error: "Database temporarily unavailable",
+        timestamp: new Date().toISOString()
+      });
     }
 
     console.log(`Found ${products.length} products for voice search: "${text}"`);
@@ -72,11 +102,13 @@ const handleVoiceToGemini = async (req, res) => {
   } catch (error) {
     console.error("Voice search error:", error.message);
     console.error("Error stack:", error.stack);
+    console.error("Error details:", error);
     
     res.status(500).json({ 
       success: false,
       error: "Failed to process voice input",
       message: "Internal server error occurred while processing your voice search",
+      details: error.message,
       timestamp: new Date().toISOString()
     });
   }

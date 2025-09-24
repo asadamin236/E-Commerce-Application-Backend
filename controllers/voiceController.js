@@ -1,4 +1,4 @@
-const Product = require("../models/productModel");
+const RecommendedProduct = require("../models/RecommendedProduct");
 
 // Enhanced voice search with better keyword extraction
 const extractSearchKeywords = (text) => {
@@ -25,13 +25,13 @@ const handleVoiceToGemini = async (req, res) => {
       });
     }
 
-    // Check if Product model is available
-    if (!Product) {
-      console.error("Product model is not available");
+    // Check if RecommendedProduct model is available
+    if (!RecommendedProduct) {
+      console.error("RecommendedProduct model is not available");
       return res.status(500).json({
         success: false,
         error: "Database model not found",
-        message: "Product model is not available"
+        message: "RecommendedProduct model is not available"
       });
     }
 
@@ -47,7 +47,7 @@ const handleVoiceToGemini = async (req, res) => {
         const regexPatterns = keywords.map(keyword => new RegExp(keyword, "i"));
         
         // Search for products matching any of the keywords
-        products = await Product.find({
+        products = await RecommendedProduct.find({
           $or: [
             ...regexPatterns.map(regex => ({ title: regex })),
             ...regexPatterns.map(regex => ({ category: regex })),
@@ -57,7 +57,7 @@ const handleVoiceToGemini = async (req, res) => {
       } else {
         // Fallback: search with original text
         const regex = new RegExp(text, "i");
-        products = await Product.find({
+        products = await RecommendedProduct.find({
           $or: [
             { title: regex },
             { category: regex },

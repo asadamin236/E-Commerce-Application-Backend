@@ -32,20 +32,58 @@ router.get("/voice", (req, res) => {
 });
 
 // Voice search status endpoint
-router.get("/voice/status", (req, res) => {
-  res.json({
-    success: true,
-    service: "Voice Search API",
-    status: "operational",
-    version: "1.0.0",
-    features: [
-      "Speech-to-text processing",
-      "Keyword extraction",
-      "Product search",
-      "Real-time results"
-    ],
-    timestamp: new Date().toISOString()
-  });
+router.get("/voice/status", async (req, res) => {
+  const mongoose = require("mongoose");
+  const RecommendedProduct = require("../models/RecommendedProduct");
+  
+  try {
+    // Check database connection
+    const dbStatus = mongoose.connection.readyState;
+    const dbStates = {
+      0: "disconnected",
+      1: "connected", 
+      2: "connecting",
+      3: "disconnecting"
+    };
+
+    // Try to count products
+    let productCount = 0;
+    let dbError = null;
+    
+    try {
+      productCount = await RecommendedProduct.countDocuments();
+    } catch (error) {
+      dbError = error.message;
+    }
+
+    res.json({
+      success: true,
+      service: "Voice Search API",
+      status: "operational",
+      version: "1.0.0",
+      database: {
+        status: dbStates[dbStatus] || "unknown",
+        connected: dbStatus === 1,
+        productCount: productCount,
+        error: dbError
+      },
+      features: [
+        "Speech-to-text processing",
+        "Keyword extraction", 
+        "Product search",
+        "Real-time results"
+      ],
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.json({
+      success: false,
+      service: "Voice Search API", 
+      status: "error",
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 module.exports = router;
